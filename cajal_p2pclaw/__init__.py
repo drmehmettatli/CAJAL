@@ -13,7 +13,7 @@ from cajal_p2pclaw.chat import CAJALChat, chat
 from cajal_p2pclaw.generator import PaperGenerator
 from cajal_p2pclaw.citations import find_references, format_reference
 from cajal_p2pclaw.tribunal import Tribunal
-from cajal_p2pclaw.formats import to_markdown, to_latex, to_text, save
+from cajal_p2pclaw.formats import to_markdown, to_latex, to_text, save_paper
 
 __all__ = [
     "CAJALModel",
@@ -27,6 +27,6 @@ __all__ = [
     "to_markdown",
     "to_latex",
     "to_text",
-    "save",
+    "save_paper",
     "__version__",
 ]

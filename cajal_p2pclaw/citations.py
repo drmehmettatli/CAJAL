@@ -1,13 +1,16 @@
 """CAJAL citations module — fetch real references from arXiv and CrossRef."""
 
+import logging
 import re
 import time
 from typing import List, Dict, Optional
 import requests
 
+logger = logging.getLogger(__name__)
 
 ARXIV_API = "https://export.arxiv.org/api/query"
 CROSSREF_API = "https://api.crossref.org/works"
+API_RATE_LIMIT_DELAY = 0.5  # seconds to wait between API calls (polite rate limiting)
 
 
 def _parse_arxiv_entry(entry_text: str) -> Optional[Dict]:
@@ -51,7 +54,8 @@ def fetch_arxiv(topic: str, count: int = 5) -> List[Dict]:
     try:
         response = requests.get(ARXIV_API, params=params, timeout=15)
         response.raise_for_status()
-    except requests.RequestException:
+    except requests.RequestException as exc:
+        logger.warning("arXiv API request failed: %s", exc)
         return []
 
     entries = re.findall(r"<entry>(.*?)</entry>", response.text, re.DOTALL)
@@ -74,7 +78,8 @@ def fetch_crossref(topic: str, count: int = 5) -> List[Dict]:
         response = requests.get(CROSSREF_API, params=params, timeout=15)
         response.raise_for_status()
         data = response.json()
-    except (requests.RequestException, ValueError):
+    except (requests.RequestException, ValueError) as exc:
+        logger.warning("CrossRef API request failed: %s", exc)
         return []
 
     items = data.get("message", {}).get("items", [])
@@ -118,7 +123,7 @@ def find_references(topic: str, count: int = 8) -> List[Dict]:
     """
     half = max(count // 2, 1)
     arxiv_refs = fetch_arxiv(topic, half)
-    time.sleep(0.5)  # polite delay between API calls
+    time.sleep(API_RATE_LIMIT_DELAY)
     crossref_refs = fetch_crossref(topic, count - len(arxiv_refs))
 
     combined: List[Dict] = []

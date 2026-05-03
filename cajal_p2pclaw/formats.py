@@ -124,7 +124,7 @@ def to_text(paper: Dict) -> str:
     return text
 
 
-def save(paper: Dict, path: str, fmt: str = "markdown") -> str:
+def save_paper(paper: Dict, path: str, fmt: str = "markdown") -> str:
     """
     Save *paper* to *path* in the requested *fmt* (markdown | latex | text).
 

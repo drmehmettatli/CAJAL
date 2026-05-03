@@ -3,6 +3,8 @@
 import json
 from typing import Dict, List, Optional, Tuple
 
+_MAX_PAPER_TEXT_LENGTH = 6000  # cap paper text sent to each judge to avoid token overflow
+
 DIMENSIONS = [
     "Novelty",
     "Methodological Soundness",
@@ -33,7 +35,7 @@ def _build_judge_prompt(paper_text: str) -> str:
     dims_json = ", ".join(f'"{d}"' for d in DIMENSIONS)
     return _JUDGE_PROMPT_TEMPLATE.format(
         dimensions=dims_json,
-        paper_text=paper_text[:6000],  # cap to avoid token overflow
+        paper_text=paper_text[:_MAX_PAPER_TEXT_LENGTH],
     )
 
 
@@ -67,7 +69,11 @@ def _ollama_judge(paper_text: str, host: str, model: str) -> Optional[Dict]:
         response.raise_for_status()
         content = response.json()["message"]["content"]
         return _parse_scores(content)
-    except Exception:
+    except requests.RequestException as exc:
+        logger.warning("Tribunal: Ollama request failed: %s", exc)
+        return None
+    except (KeyError, ValueError) as exc:
+        logger.warning("Tribunal: unexpected response format: %s", exc)
         return None
 
 

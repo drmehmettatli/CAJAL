@@ -6,10 +6,11 @@ from typing import Dict, List, Optional
 import requests
 
 from .citations import find_references, format_reference
-from .formats import to_markdown, to_latex, save as save_paper
+from .formats import to_markdown, to_latex, save_paper as _save_paper
 
 _DEFAULT_HOST = "http://localhost:11434"
 _DEFAULT_MODEL = "cajal"
+_MAX_DRAFT_REVIEW_LENGTH = 8000  # cap draft text sent to the LLM for review
 
 # ---------------------------------------------------------------------------
 # System prompt
@@ -285,7 +286,7 @@ class PaperGenerator:
         }
 
         if output_path:
-            save_paper(paper, output_path, fmt)
+            _save_paper(paper, output_path, fmt)
             print(f"[CAJAL] Paper saved to: {output_path}")
 
         if fmt in ("latex", "tex"):
@@ -310,7 +311,7 @@ class PaperGenerator:
         str
             Peer-review feedback from the LLM.
         """
-        prompt = _REVIEW_PROMPT.format(draft=draft[:8000])
+        prompt = _REVIEW_PROMPT.format(draft=draft[:_MAX_DRAFT_REVIEW_LENGTH])
         return _ollama_chat(
             prompt, self.host, self.model,
             system=_SYSTEM_PROMPT,
